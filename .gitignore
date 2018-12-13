@@ -1,0 +1,10 @@
+
+*.db
+snaps/
+Analysis.txt
+Credentials.txt
+geckodriver.log
+List.txt
+.project
+.pydevproject
+*.pyc
