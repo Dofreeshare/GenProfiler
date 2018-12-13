@@ -22,6 +22,203 @@ import time
 
 from subhamangal import *
 
+BROWSERLOCATION = 'D:\Portables\geckodriver'
+
+file_name = "Generic.db"
+db_schema = ''' CREATE TABLE IF NOT EXISTS "PrimData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE,
+    "FName" varchar(20)  NULL ,
+    "MName" varchar(20)  NULL ,
+    "LName" varchar(20)  NULL ,
+    "Height" int NULL,
+    "Weight" int NULL,
+    "Edu" TEXT NULL,
+    "Prof" TEXT NULL,
+    "Income" int NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS "CastData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE,
+    "MCast" varchar(20)  NULL ,
+    "SCast" varchar(20)  NULL ,
+    "Gotra" varchar(20)  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `PrimData`(`ProfId`) ON delete cascade ON update no action
+);
+
+
+CREATE TABLE IF NOT EXISTS "BirData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE ,
+    "BTime" varchar(20)  NULL ,
+    "BDate" varchar(20)  NULL ,
+    "MSign" varchar(20)  NULL ,
+    "SSign" varchar(20)  NULL ,
+    "Naksh" varchar(20)  NULL ,
+    "Charan" varchar(20)  NULL ,
+    "Gan" varchar(20)  NULL ,
+    "Guna" int  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `CastData`(`ProfId`) ON delete cascade ON update no action
+    
+);
+
+CREATE TABLE IF NOT EXISTS "CurLocData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE,
+    "Country" varchar(20)  NULL ,
+    "State" varchar(20)  NULL ,
+    "Dist" varchar(20)  NULL ,
+    "Tal" varchar(20)  NULL ,
+    "City" varchar(20)  NULL ,
+    "Pincode" varchar(20)  NULL ,
+    "LAT" REAL  NULL ,
+    "LONG" REAL  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `BirData`(`ProfId`) ON delete cascade ON update no action
+);
+
+CREATE TABLE IF NOT EXISTS "BirLocData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE ,
+    "Country" varchar(20)  NULL ,
+    "State" varchar(20)  NULL ,
+    "Dist" varchar(20)  NULL ,
+    "Tal" varchar(20)  NULL ,
+    "City" varchar(20)  NULL ,
+    "Pincode" varchar(20)  NULL ,
+    "LAT" REAL  NULL ,
+    "LONG" REAL  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `CurLocData`(`ProfId`) ON delete cascade ON update no action
+);
+
+CREATE TABLE IF NOT EXISTS "ParLocData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE ,
+    "Country" varchar(20)  NULL ,
+    "State" varchar(20)  NULL ,
+    "Dist" varchar(20)  NULL ,
+    "Tal" varchar(20)  NULL ,
+    "City" varchar(20)  NULL ,
+    "Pincode" varchar(20)  NULL ,
+    "LAT" REAL  NULL ,
+    "LONG" REAL  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `BirLocData`(`ProfId`) ON delete cascade ON update no action
+);
+
+CREATE TABLE IF NOT EXISTS "AnsLocData" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE ,
+    "Country" varchar(20)  NULL ,
+    "State" varchar(20)  NULL ,
+    "Dist" varchar(20)  NULL ,
+    "Tal" varchar(20)  NULL ,
+    "City" varchar(20)  NULL ,
+    "Pincode" varchar(20)  NULL ,
+    "LAT" REAL  NULL ,
+    "LONG" REAL  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `ParLocData`(`ProfId`) ON delete cascade ON update no action
+);
+
+CREATE TABLE IF NOT EXISTS "Metdata" (
+    "id" INTEGER PRIMARY KEY AUTOINCREMENT ,
+    "ProfId" varchar(20) UNIQUE ,
+    "ProfRef" varchar(20) NULL,
+    "ProfLink" text  NULL ,
+    "ProfCreatTime" varchar(20)  NULL ,
+    "ProfUpdate" varchar(20)  NULL ,
+    "OtherData" text  NULL ,
+    "ProfileAccess" int  NULL ,
+    FOREIGN KEY (`ProfId`) REFERENCES `AnsLocData`(`ProfId`) ON delete cascade ON update no action
+);'''
+
+class Browser(object):
+    """Handles web browser"""
+    def __init__(self):
+        """Class Initialization Function"""
+
+    def __call__(self):
+        """Class call"""
+
+    def startDriver(self,drive="firefox"):
+        """Starts the driver"""
+        #Make sure that the browser parameter is a string
+        assert isinstance(drive,str)
+
+        #Standardize the browser selection string
+        drive = drive.lower().strip()
+        #Start the browser
+        if drive=="firefox":
+            firefox_profile = webdriver.FirefoxProfile()
+            firefox_profile.set_preference("browser.privatebrowsing.autostart", True)    
+            
+            self.browser = webdriver.Firefox(firefox_profile=firefox_profile, executable_path=BROWSERLOCATION)
+            
+
+    def closeDriver(self):
+        """Close the browser object"""
+        #Try to close the browser
+        try:
+            self.browser.close()
+        except Exception as e:
+            print("Error closing the web browser: {}".format(e))
+
+    def getURL(self,url='www.google.com'):
+        """Retrieve the data from a url"""
+        #Retrieve the data from the specified url
+        data = self.browser.get(url)
+
+        return data
+
+    def __enter__(self):
+        """Set things up"""
+        #Start the web driver
+        self.startDriver()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """Tear things down"""
+        #Close the webdriver
+#         self.closeDriver()
+        print ("Close Browser by yourself\n")
+
+class DBDriver(object):
+    """Handles web browser"""
+    def __init__(self, file_name, db_schema):
+        """Class Initialization Function"""
+        self.filename = file_name
+        self.dbschema = db_schema
+
+    def __call__(self):
+        """Class call"""
+
+    def startDriver(self):
+        """Starts the driver"""
+        try:
+            self.conn = sqlite3.connect(self.filename)
+        except Error as e:
+            print(e)
+        else:
+            c = self.conn.cursor()
+            c.executescript(self.dbschema)
+
+    def closeDriver(self):
+        """Close the browser object"""
+        #Try to close the browser
+        self.conn.commit()
+        self.conn.cursor().close()     
+            
+    def __enter__(self):
+        """Set things up"""
+        #Start the web driver
+        self.startDriver()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        """Tear things down"""
+        #Close the webdriver
+        self.closeDriver()  
+
 def Update_Guna(conn):
     
     if (os.path.isfile('List.txt') & os.path.exists('List.txt')):

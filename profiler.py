@@ -23,6 +23,9 @@ import time
 from subhamangal import *
 from common import *
 
+import vedicmaratha as vedicm
+import common
+
 help_banner = """python profiler.py -[option]
 
 -h : for this banner
@@ -63,7 +66,7 @@ def GetCredentialsFromFile():
 def kill_popup(browser):
     
     try:
-         browser.find_element_by_xpath('//img[@alt="banner_popup_2"]/preceding::button[@data-dismiss="modal"]').click()
+        browser.find_element_by_xpath('//img[@alt="banner_popup_2"]/preceding::button[@data-dismiss="modal"]').click()
     except NoSuchElementException:
         print ("Seems like no popup to face\n")
 
@@ -100,16 +103,23 @@ def main(argv):
     
 #    sys.exit()
     
-    conn = CreateNewDB()
+    with Browser() as br, DBDriver(common.file_name, common.db_schema) as DB:
     
-    #Collect the First Stage of data
-    if (profiler_level == 1):
-        print ("Collecting only primary info\n")
-        browser = NagivateToDashBoard(login_ID, login_pass, login_page)
-        CollectAllQuickSearch(browser, conn)
-    elif(profiler_level == 2):
-        print ("Updating the Guna\n")
-        Update_Guna(conn)
+        host_name  = (re.findall('(?<=www.).+(?=.com)', login_page))[0]
+        
+        print host_name
+        
+        if (not (os.path.exists('snaps/' + host_name))):
+            os.mkdir('snaps/' + host_name)
+    
+        #Collect the First Stage of data
+        if (profiler_level == 1):
+            print ("Collecting only primary info\n")
+            browser = vedicm.NagivateToDashBoard(login_ID, login_pass, login_page, br.browser)
+            vedicm.CollectAllQuickSearch(br.browser, DB.conn)
+        elif(profiler_level == 2):
+            print ("Updating the Guna\n")
+            Update_Guna(DB.conn)
     
 if __name__ == '__main__':
     main(sys.argv[1:])
