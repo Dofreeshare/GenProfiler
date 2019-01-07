@@ -24,6 +24,7 @@ from subhamangal import *
 from common import *
 
 import vedicmaratha as vedicm
+import TAJ as TAJ
 import common
 
 help_banner = """python profiler.py -[option]
@@ -32,7 +33,13 @@ help_banner = """python profiler.py -[option]
 -a : Program will request you for Username and Password
 -t : Text file having user name and password in it
      Please make sure its name is Credentials.txt
--l : Level of the profile data collections
+"""
+
+option_banner = """ Please select the options to collect the data.
+Options are as follows:
+1 : Use list.txt file to collect the Data
+2 : Collect all data from bridal list present on site
+3 : Use it for Guna update using list.txt file
 """
 
 login_ID = None
@@ -80,7 +87,7 @@ def main(argv):
     global login_page
     
     try:
-        opts, remaining = getopt.getopt(argv, "hatl:")
+        opts, remaining = getopt.getopt(argv, "hat")
     except getopt.GetoptError:
         print (help_banner)
     
@@ -97,9 +104,16 @@ def main(argv):
                 login_page = raw_input("Enter Login page:")
             if o in ('-t'):
                 (login_ID, login_pass, login_page) = GetCredentialsFromFile()
-            if o in ('-l'):
-                profiler_level = int(a)
-                print (a)
+                
+    profiler_level_string = raw_input(option_banner)
+    try:
+        profiler_level = int(profiler_level_string)
+        if (profiler_level < 1 or profiler_level > 3):
+            profiler_level = 1
+    except ValueError:
+        profiler_level = 1
+        print ("Seems like you have given incorrect option taking options forcefully as 1\n")
+        pass
     
 #    sys.exit()
     
@@ -115,11 +129,21 @@ def main(argv):
         #Collect the First Stage of data
         if (profiler_level == 1):
             print ("Collecting only primary info\n")
-            browser = vedicm.NagivateToDashBoard(login_ID, login_pass, login_page, br.browser)
-            vedicm.CollectAllQuickSearch(br.browser, DB.conn)
+            if (host_name == 'vedicmaratha'):
+                vedicm.NagivateToDashBoard(login_ID, login_pass, login_page, br.browser)
+                vedicm.CollectAllQuickSearch(br.browser, DB.conn)
+            elif (host_name == 'tumchaaamchajamla'):
+                TAJ.NagivateToDashBoard(login_ID, login_pass, login_page, br.browser)
+                TAJ.CollectAllQuickSearch(br.browser, DB.conn)
         elif(profiler_level == 2):
-            print ("Updating the Guna\n")
-            Update_Guna(DB.conn)
+            print ("Checking full completion support\n")
+            if (host_name == 'vedicmaratha'):
+                print ("Feature not supported in Vedic maratha\n")
+            elif (host_name == 'tumchaaamchajamla'):
+                print ("Collecting all Data\n")
+                TAJ.NagivateToDashBoard(login_ID, login_pass, login_page, br.browser)
+                TAJ.CollectDetailedInformation(br.browser, DB.conn)
+#             Update_Guna(DB.conn)
     
 if __name__ == '__main__':
     main(sys.argv[1:])
